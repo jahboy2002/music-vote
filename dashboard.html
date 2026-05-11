@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ผลโหวตแบบเรียลไทม์ (Live Dashboard)</title>
+    <title>ผลโหวตแบบเรียลไทม์ (Live Dashboard) | THANYARAT SCHOOL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -39,12 +39,11 @@
         .refresh-spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         
-        /* สไตล์ปุ่มหยุด/เล่น */
         .btn-toggle-refresh {
             transition: all 0.3s;
         }
         .btn-toggle-refresh.paused {
-            background-color: #ef4444; /* สีแดงเมื่อหยุด */
+            background-color: #ef4444; 
             color: white;
             border-color: #ef4444;
             animation: pulse-red 2s infinite;
@@ -59,17 +58,23 @@
 <body>
 
     <!-- ส่วนหัว (แสดงหัวข้อ) -->
-    <!-- สัดส่วนเป๊ะตามที่อาจารย์ตั้งค่าไว้: text-3xl, max-w-2xl, pt-4, pb-2 -->
     <div class="w-full pt-4 pb-2 px-10 text-center relative z-10 flex flex-col items-center justify-center">
         <div class="inline-flex items-center space-x-2 bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-1 rounded-full text-sm font-bold mb-3 animate-pulse">
             <span class="w-2 h-2 bg-red-500 rounded-full"></span>
             <span>LIVE RESULT</span>
         </div>
-        <!-- สระอูสมบูรณ์ด้วย leading-relaxed pb-2 -->
+        
         <h1 id="topicDisplay" class="max-w-2xl mx-auto text-3xl font-extrabold tracking-tight leading-relaxed pb-2 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
             กำลังโหลดหัวข้อ...
         </h1>
-        <p id="totalVotesDisplay" class="mt-2 text-xl text-gray-400 font-semibold">จำนวนผู้โหวตทั้งหมด: 0 คน</p>
+        
+        <div class="flex flex-col items-center">
+            <p id="totalVotesDisplay" class="text-xl text-gray-400 font-semibold italic">จำนวนผู้โหวตทั้งหมด: 0 คน</p>
+            <!-- แถบลิขสิทธิ์ที่เพิ่มใหม่: เล็ก บาง เรียบหรู -->
+            <p class="mt-1 text-[10px] text-white/20 tracking-[0.2em] uppercase font-bold">
+                © 2026 Matiphat Cherdsuk | THANYARAT SCHOOL
+            </p>
+        </div>
     </div>
 
     <!-- ส่วนแสดงกราฟ -->
@@ -77,7 +82,7 @@
         <canvas id="resultChart"></canvas>
     </div>
 
-    <!-- ส่วนควบคุม (สำหรับแอดมินคลิกเปลี่ยนรูปแบบ) -->
+    <!-- ส่วนควบคุม (Control Panel) -->
     <div class="control-panel w-full p-4 flex justify-between items-center z-10">
         <div class="flex space-x-2">
             <button onclick="changeChartType('bar')" id="btn-bar" class="btn-chart-type active px-4 py-2 rounded-lg border border-gray-600 text-gray-300 font-semibold text-sm flex items-center">
@@ -94,12 +99,10 @@
         <div class="flex items-center space-x-4">
             <span id="updateStatus" class="text-sm text-gray-400">อัปเดตล่าสุด: เมื่อสักครู่</span>
             
-            <!-- ปุ่มใหม่: หยุด/เล่น อัปเดตอัตโนมัติ -->
             <button onclick="toggleAutoRefresh()" id="btn-toggle-refresh" class="btn-toggle-refresh px-4 py-2 bg-transparent border border-gray-500 hover:bg-gray-800 text-gray-300 rounded-lg font-semibold text-sm flex items-center transition">
                 <span id="toggleIcon" class="mr-2">⏸️</span> <span id="toggleText">หยุดอัปเดตชั่วคราว</span>
             </button>
 
-            <!-- ปุ่มเดิม: รีเฟรชทันที -->
             <button onclick="manualRefresh()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-sm flex items-center transition shadow-lg shadow-indigo-500/30">
                 <span id="refreshIcon" class="mr-2">🔄</span> รีเฟรชทันที
             </button>
@@ -111,8 +114,8 @@
         
         let chartInstance = null;
         let currentChartType = 'bar';
-        let autoRefreshInterval = null; // เก็บตัวแปรเพื่อใช้หยุดเวลา
-        let isPaused = false; // สถานะหยุดชั่วคราว
+        let autoRefreshInterval = null; 
+        let isPaused = false; 
 
         const chartColors = [
             'rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)', 
@@ -140,7 +143,6 @@
 
                     updateChart(labels, values);
                     
-                    // อัปเดตเวลาเฉพาะตอนที่โหลดข้อมูลจริง
                     const now = new Date();
                     const timeString = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     document.getElementById('updateStatus').innerText = `อัปเดตล่าสุด: ${timeString}`;
@@ -205,36 +207,29 @@
             });
         }
 
-        // ฟังก์ชันใหม่: จัดการการหยุด/เล่น อัปเดตอัตโนมัติ
         function toggleAutoRefresh() {
             const btn = document.getElementById('btn-toggle-refresh');
             const icon = document.getElementById('toggleIcon');
             const text = document.getElementById('toggleText');
 
             if (isPaused) {
-                // กลับมาเล่นต่อ (Play)
                 isPaused = false;
                 btn.classList.remove('paused');
                 icon.innerText = '⏸️';
                 text.innerText = 'หยุดอัปเดตชั่วคราว';
-                // เริ่มตั้งเวลาใหม่
                 autoRefreshInterval = setInterval(fetchResults, 5000);
-                // อัปเดตทันทีหนึ่งครั้งเพื่อไม่ให้ขาดตอน
                 fetchResults();
             } else {
-                // หยุดอัปเดต (Pause)
                 isPaused = true;
                 btn.classList.add('paused');
                 icon.innerText = '▶️';
                 text.innerText = 'เล่นต่อ (แช่แข็งหน้าจอ)';
-                // ยกเลิกระบบตั้งเวลา
                 clearInterval(autoRefreshInterval);
             }
         }
 
         window.onload = () => {
             fetchResults();
-            // เริ่มต้นให้โหลดอัตโนมัติ
             autoRefreshInterval = setInterval(fetchResults, 5000);
         };
     </script>
