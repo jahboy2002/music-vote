@@ -3,197 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ร่วมโหวตกิจกรรม | THANYARAT SCHOOL</title>
+    <title>ร่วมโหวตกิจกรรม!</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
             font-family: 'Sarabun', sans-serif; 
-            background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 50%, #0f172a 100%);
-            color: white;
+            /* พื้นหลังไล่สีสดใสสไตล์วัยรุ่น */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            /* เพิ่ม flex เพื่อดันให้ลิขสิทธิ์อยู่ก้นกล่องเสมอ */
             display: flex;
             flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
+            min-height: 400px;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        /* Animation สำหรับการโหลด */
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin 2s linear infinite; }
-
-        /* เอฟเฟกต์ปุ่มตัวเลือก */
         .btn-choice {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .btn-choice:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-choice:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .btn-choice:active {
+            transform: translateY(0) scale(0.98);
+        }
 
-        /* สำหรับ Pull-to-refresh */
+        /* อนิเมชันโหลดข้อมูล */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #764ba2;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ระบบ Pull-to-refresh Indicator */
         #pull-indicator {
             transition: transform 0.2s, opacity 0.2s;
             pointer-events: none;
         }
     </style>
 </head>
-<body class="safe-top p-5">
+<body class="flex items-center justify-center p-4">
 
+    <!-- ตัวบ่งชี้ตอนลากรีเฟรช -->
     <div id="pull-indicator" class="fixed top-0 left-0 w-full flex justify-center p-4 opacity-0 z-50">
-        <div class="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30">
+        <div class="bg-white/90 backdrop-blur-md p-2 rounded-full border border-gray-200 shadow-lg">
             <span class="text-xl">🔄</span>
         </div>
     </div>
 
-    <div class="w-full max-w-md mt-10 mb-20 glass-panel p-8 text-center relative">
+    <!-- การ์ดหลัก -->
+    <div class="glass-card w-full max-w-md p-8 relative overflow-hidden text-center">
         
-        <div class="mb-8">
-            <div class="flex justify-center items-center space-x-2 mb-4">
-                <span class="inline-block bg-pink-500/20 text-pink-300 px-4 py-1 rounded-full text-xs font-bold tracking-wider border border-pink-500/30">
-                    LIVE POLLING 🎵
-                </span>
-                <button onclick="initApp()" class="p-1 hover:bg-white/10 rounded-full transition active:rotate-180">
-                    <span class="text-lg">🔄</span>
-                </button>
-            </div>
-            <h1 id="topicTitle" class="text-2xl md:text-3xl font-extrabold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-pink-200 px-2">
-                กำลังดึงหัวข้อ...
-            </h1>
-        </div>
+        <!-- ของตกแต่งการ์ด -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50 -mr-10 -mt-10"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 bg-pink-300 rounded-full mix-blend-multiply filter blur-2xl opacity-50 -ml-10 -mb-10"></div>
 
-        <div id="mainContainer">
-            <div id="loadingScreen" class="py-12">
-                <div class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
-                <p class="mt-4 text-white/60 text-sm italic">กำลังปรับจูนระบบ...</p>
+        <!-- กล่องห่อหุ้มเนื้อหา (เพื่อให้ลิขสิทธิ์โดนดันลงไปก้นการ์ด) -->
+        <div class="flex-grow flex flex-col justify-center">
+            
+            <!-- หน้าจอที่ 1: กำลังโหลด -->
+            <div id="loadingScreen" class="py-12 z-10 relative">
+                <div class="loader mb-4"></div>
+                <p class="text-gray-600 font-semibold text-lg animate-pulse">กำลังดึงข้อมูลกิจกรรม... 🎶</p>
             </div>
 
-            <div id="votingScreen" class="hidden space-y-4"></div>
+            <!-- หน้าจอที่ 2: แสดงหัวข้อและปุ่มโหวต -->
+            <div id="votingScreen" class="hidden z-10 relative fade-in">
+                <div class="mb-8 flex flex-col items-center">
+                    <div class="flex justify-center items-center space-x-2 mb-4">
+                        <span class="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-800 text-sm font-bold">✨ Live Voting ✨</span>
+                        <!-- เพิ่มปุ่มรีเฟรชตรงนี้ -->
+                        <button onclick="initApp()" class="p-1 hover:bg-gray-100 rounded-full transition-all active:rotate-180" title="รีเฟรชหัวข้อโหวต">
+                            <span class="text-lg drop-shadow-sm">🔄</span>
+                        </button>
+                    </div>
+                    <h1 id="displayTopic" class="text-2xl md:text-3xl font-extrabold text-gray-800 leading-tight">
+                        <!-- หัวข้อจะมาแสดงที่นี่ -->
+                    </h1>
+                </div>
+                
+                <div id="choicesList" class="flex flex-col space-y-4">
+                    <!-- ปุ่มตัวเลือกจะถูกสร้างขึ้นมาที่นี่ -->
+                </div>
+            </div>
 
-            <div id="successScreen" class="hidden py-8 animate-in fade-in">
+            <!-- หน้าจอที่ 3: โหวตสำเร็จ -->
+            <div id="successScreen" class="hidden py-8 z-10 relative fade-in">
                 <div class="text-6xl mb-4">🎉</div>
-                <h2 class="text-2xl font-bold text-green-400 mb-2">ส่งคำตอบแล้ว!</h2>
-                <p class="text-white/70 text-sm mb-6">ขอบคุณที่ร่วมสนุก รอดูผลโหวต<br>บนจอโปรเจกเตอร์ได้เลยครับ</p>
-                <button id="voteAgainBtn" onclick="initApp()" class="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full text-sm font-semibold transition hidden">
-                    โหวตอีกครั้ง 🔄
-                </button>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">ส่งคำตอบเรียบร้อย!</h2>
+                <p class="text-gray-600 font-medium mb-6">ขอบคุณที่ร่วมสนุก รอดูผลโหวตบนหน้าจอหลักได้เลยครับ 🚀</p>
+                <button id="voteAgainLink" onclick="initApp()" class="text-sm text-indigo-500 font-bold hover:text-indigo-700 underline hidden">โหวตใหม่อีกครั้ง</button>
             </div>
 
-            <div id="alreadyVotedScreen" class="hidden py-8">
+            <!-- หน้าจอที่ 4: โหวตไปแล้ว (กันโหวตซ้ำ) -->
+            <div id="alreadyVotedScreen" class="hidden py-8 z-10 relative fade-in">
                 <div class="text-6xl mb-4">🙌</div>
-                <h2 class="text-xl font-bold text-yellow-400 mb-2">คุณโหวตไปแล้ว!</h2>
-                <p class="text-white/60 text-sm">หัวข้อนี้จำกัด 1 สิทธิ์ ต่อ 1 เครื่อง<br>ขอบคุณมากครับนักเรียน</p>
+                <h2 class="text-2xl font-bold text-yellow-600 mb-2">คุณได้ร่วมโหวตไปแล้ว!</h2>
+                <p class="text-gray-600 font-medium mb-6">กิจกรรมนี้จำกัด 1 สิทธิ์ ต่อ 1 คน<br>ขอบคุณที่ร่วมสนุกครับ 🎵</p>
             </div>
+
         </div>
+
+        <!-- แถบลิขสิทธิ์ (ติดอยู่ก้นการ์ดกระจก) -->
+        <div class="mt-8 pt-4 border-t border-gray-200 z-10 relative">
+            <p class="text-[10px] text-gray-400 tracking-[0.1em] uppercase font-bold">
+                © 2026 Matiphat Cherdsuk | THANYARAT SCHOOL
+            </p>
+        </div>
+
     </div>
 
-    <footer class="mt-auto py-6 text-center w-full">
-        <p class="text-[10px] text-white/30 tracking-[0.2em] uppercase font-bold">
-            © 2026 Matiphat Cherdsuk | THANYARAT SCHOOL
-        </p>
-    </footer>
-
     <script>
+        // ใช้ URL สมองกลเดิมที่เชื่อมไว้
         const API_URL = "https://script.google.com/macros/s/AKfycbwHfX4JhbhSNz7BFp8mjYR9hqSIUfYsk9fjcLnb0lGCAi92V5yNHbA_bCAplGla9yDULA/exec";
-        
+
         let currentTopic = "";
         let allowMultiple = false;
-        
+
+        // สีสันสำหรับปุ่มให้ดูไม่น่าเบื่อ
+        const colors = [
+            'bg-gradient-to-r from-blue-400 to-blue-600',
+            'bg-gradient-to-r from-green-400 to-green-600',
+            'bg-gradient-to-r from-pink-400 to-pink-600',
+            'bg-gradient-to-r from-yellow-400 to-orange-500',
+            'bg-gradient-to-r from-purple-400 to-purple-600'
+        ];
+
         // --- ระบบ Pull to Refresh ---
         let touchStart = 0;
-        document.addEventListener('touchstart', e => touchStart = e.touches[0].pageY);
+        document.addEventListener('touchstart', e => touchStart = e.touches[0].pageY, {passive: true});
         document.addEventListener('touchmove', e => {
             const touchMove = e.touches[0].pageY;
             const diff = touchMove - touchStart;
-            if (window.scrollY === 0 && diff > 70) {
-                document.getElementById('pull-indicator').style.opacity = '1';
-                document.getElementById('pull-indicator').style.transform = `translateY(${Math.min(diff/2, 50)}px)`;
+            // ถ้ายืดลงมาตอนอยู่บนสุด
+            if (window.scrollY === 0 && diff > 0) {
+                const opacity = Math.min(diff / 150, 1);
+                const transform = Math.min(diff / 2.5, 60);
+                document.getElementById('pull-indicator').style.opacity = opacity;
+                document.getElementById('pull-indicator').style.transform = `translateY(${transform}px)`;
             }
-        });
+        }, {passive: true});
+        
         document.addEventListener('touchend', e => {
             const touchEnd = e.changedTouches[0].pageY;
+            // ถ้าระยะลากมากพอ ให้ทำงานดึงข้อมูล
             if (window.scrollY === 0 && (touchEnd - touchStart) > 100) {
                 initApp();
             }
+            // รีเซ็ตการแสดงผลตัวลาก
             document.getElementById('pull-indicator').style.opacity = '0';
             document.getElementById('pull-indicator').style.transform = 'translateY(0)';
         });
 
-        // --- ระบบหลัก ---
+        // เมื่อเปิดหน้าเว็บมา ให้ดึงข้อมูลทันที
+        window.onload = async () => {
+            initApp();
+        };
+
         async function initApp() {
             showScreen('loadingScreen');
             try {
-                const response = await fetch(`${API_URL}?action=getSettings`);
+                const response = await fetch(API_URL + "?action=getSettings");
                 const data = await response.json();
 
-                if (data.topic) {
+                if (data.topic && data.choices.length > 0) {
                     currentTopic = data.topic;
-                    allowMultiple = (data.allowMultipleVotes === "true" || data.allowMultipleVotes === true);
-                    document.getElementById('topicTitle').innerText = currentTopic;
+                    allowMultiple = data.allowMultipleVotes === "true" || data.allowMultipleVotes === true;
                     
-                    const hasVoted = localStorage.getItem('voted_' + currentTopic);
-                    if (hasVoted === 'true' && !allowMultiple) {
-                        showScreen('alreadyVotedScreen');
-                    } else {
-                        renderChoices(data.choices);
-                        showScreen('votingScreen');
-                    }
+                    checkVoteStatus(data.choices);
+                } else {
+                    document.getElementById('loadingScreen').innerHTML = "🤷‍♂️<br><br>ยังไม่มีการตั้งหัวข้อโหวต<br>รอคุณครูสักครู่นะครับ!";
                 }
             } catch (error) {
-                document.getElementById('topicTitle').innerText = "เชื่อมต่อล้มเหลว";
-                console.error(error);
+                document.getElementById('loadingScreen').innerHTML = "❌<br><br>เชื่อมต่อระบบไม่ได้<br>โปรดลองรีเฟรชหน้าเว็บใหม่";
+            }
+        }
+
+        function checkVoteStatus(choices) {
+            // เช็คว่ามือถือเครื่องนี้เคยปั๊มตรายางหัวข้อนี้หรือยัง
+            const hasVoted = localStorage.getItem('voted_' + currentTopic);
+
+            if (hasVoted === 'true' && !allowMultiple) {
+                // ถ้าเคยโหวตแล้ว และครูปิดสวิตช์ห้ามโหวตซ้ำ
+                showScreen('alreadyVotedScreen');
+            } else {
+                // ถ้ายังไม่เคยโหวต หรือครูเปิดสวิตช์อนุญาต
+                renderChoices(choices);
+                showScreen('votingScreen');
             }
         }
 
         function renderChoices(choices) {
-            const container = document.getElementById('votingScreen');
-            container.innerHTML = '';
-            const colors = ['from-blue-500 to-blue-700', 'from-emerald-500 to-emerald-700', 'from-pink-500 to-pink-700', 'from-amber-500 to-orange-700', 'from-purple-500 to-indigo-700'];
+            document.getElementById('displayTopic').innerText = currentTopic;
+            const choicesContainer = document.getElementById('choicesList');
+            choicesContainer.innerHTML = ''; 
 
-            choices.forEach((choice, i) => {
+            choices.forEach((choice, index) => {
+                const colorClass = colors[index % colors.length];
                 const btn = document.createElement('button');
-                btn.className = `btn-choice w-full py-4 px-6 rounded-2xl text-lg font-bold text-white bg-gradient-to-r ${colors[i % colors.length]} shadow-xl flex justify-between items-center`;
-                btn.innerHTML = `<span>${choice}</span><span class="opacity-50">👆</span>`;
-                btn.onclick = () => submitVote(choice);
-                container.appendChild(btn);
+                btn.className = `btn-choice w-full py-4 px-6 text-white text-lg font-bold rounded-2xl shadow-md flex items-center justify-between ${colorClass}`;
+                btn.innerHTML = `
+                    <span class="text-left w-full">${choice}</span>
+                    <span class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-sm ml-2">👆</span>
+                `;
+                btn.onclick = () => submitVote(choice, btn);
+                choicesContainer.appendChild(btn);
             });
         }
 
-        async function submitVote(choice) {
-            showScreen('loadingScreen');
+        // ฟังก์ชันส่งผลโหวต
+        async function submitVote(choice, btnElement) {
+            // ทำให้ปุ่มอื่นกดไม่ได้ระหว่างรอส่ง
+            const allBtns = document.querySelectorAll('.btn-choice');
+            allBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
+            
+            // เปลี่ยนข้อความปุ่มที่กดให้เป็นสถานะกำลังโหลด
+            const originalHTML = btnElement.innerHTML;
+            btnElement.style.opacity = '1';
+            btnElement.innerHTML = `<span class="loader border-white/30 border-t-white w-6 h-6 border-2 mx-auto"></span>`;
+
             try {
-                const res = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ 'action': 'vote', 'choice': choice })
+                    body: new URLSearchParams({
+                        'action': 'submitVote',
+                        'choice': choice
+                    })
                 });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    localStorage.setItem('voted_' + currentTopic, 'true');
-                    document.getElementById('voteAgainBtn').style.display = allowMultiple ? 'inline-block' : 'none';
-                    showScreen('successScreen');
+
+                // ประทับตรายางลงในมือถือเครื่องนี้
+                localStorage.setItem('voted_' + currentTopic, 'true');
+
+                // จัดการปุ่ม "โหวตอีกครั้ง" (ซ่อน/แสดง ตามสวิตช์ที่ครูตั้ง)
+                if (allowMultiple) {
+                    document.getElementById('voteAgainLink').classList.remove('hidden');
+                } else {
+                    document.getElementById('voteAgainLink').classList.add('hidden');
                 }
-            } catch (e) {
-                alert("ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่");
-                initApp();
+
+                // ส่งสำเร็จ เปลี่ยนหน้าจอ
+                showScreen('successScreen');
+
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล โปรดลองอีกครั้ง");
+                // คืนค่าปุ่ม
+                allBtns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+                btnElement.innerHTML = originalHTML;
             }
         }
 
-        function showScreen(id) {
-            ['loadingScreen', 'votingScreen', 'successScreen', 'alreadyVotedScreen'].forEach(s => {
-                document.getElementById(s).classList.add('hidden');
+        // ฟังก์ชันตัวช่วยสลับหน้าจอ (เก็บกวาดให้สะอาดตา)
+        function showScreen(screenId) {
+            ['loadingScreen', 'votingScreen', 'successScreen', 'alreadyVotedScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
             });
-            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
         }
-
-        window.onload = initApp;
     </script>
 </body>
 </html>
