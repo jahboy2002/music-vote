@@ -3,52 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการกระดานโหวต (Admin)</title>
+    <title>ระบบจัดการกระดานโหวต (Admin) | THANYARAT SCHOOL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-left-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* สไตล์สำหรับ Toggle Switch (สวิตช์เปิด-ปิด) */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #10B981; /* สีเขียวตอนเปิด */
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #10B981; /* สีเขียวตอนเปิด */
-        }
-        .toggle-checkbox {
-            right: 0;
-            z-index: 1;
-            border-color: #E5E7EB;
-            transition: all 0.3s;
-        }
-        .toggle-label {
-            width: 3rem; /* 48px */
-            height: 1.5rem; /* 24px */
-            background-color: #D1D5DB; /* สีเทาตอนปิด */
-            border-radius: 9999px;
-            transition: all 0.3s;
-        }
-        .toggle-dot {
-            width: 1.25rem; /* 20px */
-            height: 1.25rem; /* 20px */
-            background-color: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 0.125rem; /* 2px */
-            left: 0.125rem; /* 2px */
-            transition: all 0.3s;
-        }
-        .toggle-checkbox:checked ~ .toggle-dot {
-            transform: translateX(100%);
-        }
+        .toggle-checkbox:checked { right: 0; border-color: #10B981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10B981; }
+        .toggle-checkbox { right: 0; z-index: 1; border-color: #E5E7EB; transition: all 0.3s; }
+        .toggle-label { width: 3rem; height: 1.5rem; background-color: #D1D5DB; border-radius: 9999px; transition: all 0.3s; }
+        .toggle-dot { width: 1.25rem; height: 1.25rem; background-color: white; border-radius: 50%; position: absolute; top: 0.125rem; left: 0.125rem; transition: all 0.3s; }
+        .toggle-checkbox:checked ~ .toggle-dot { transform: translateX(100%); }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="p-6">
-    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-8">
+<body class="p-6 min-h-screen flex flex-col">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-8 flex-grow">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">⚙️ ตั้งค่าระบบกระดานโหวต</h1>
 
         <!-- ส่วนตั้งค่าหัวข้อโหวต -->
@@ -73,7 +45,7 @@
             <button onclick="addChoice()" class="mt-3 w-full py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">+ เพิ่มตัวเลือก</button>
         </div>
 
-        <!-- ส่วนตั้งค่าการโหวตซ้ำ (ใหม่) -->
+        <!-- ส่วนตั้งค่าการโหวตซ้ำ -->
         <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
             <div>
                 <label class="block text-gray-800 text-sm font-bold">3. กฎการโหวต:</label>
@@ -100,14 +72,19 @@
             </button>
         </div>
 
-        <!-- ข้อความแจ้งเตือน -->
         <div id="messageBox" class="mt-4 p-3 rounded-lg hidden text-center font-bold"></div>
     </div>
+
+    <!-- แถบลิขสิทธิ์ (Branding Footer) -->
+    <footer class="mt-8 pb-6 text-center w-full">
+        <p class="text-[10px] text-gray-400 tracking-[0.2em] uppercase font-bold">
+            © 2026 Matiphat Cherdsuk | THANYARAT SCHOOL
+        </p>
+    </footer>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwHfX4JhbhSNz7BFp8mjYR9hqSIUfYsk9fjcLnb0lGCAi92V5yNHbA_bCAplGla9yDULA/exec";
 
-        // อัปเดตข้อความเมื่อกดสวิตช์
         document.getElementById('allowMultipleVotes').addEventListener('change', function() {
             const statusText = document.getElementById('toggleStatusText');
             if(this.checked) {
@@ -124,7 +101,6 @@
         function addChoice() {
             const container = document.getElementById('choicesContainer');
             const rowCount = container.children.length + 1;
-            
             const newRow = document.createElement('div');
             newRow.className = 'flex items-center space-x-2 choice-row';
             newRow.innerHTML = `
@@ -146,14 +122,12 @@
         async function saveSettings() {
             const topic = document.getElementById('topic').value;
             const inputs = document.querySelectorAll('.choice-input');
-            const allowMultipleVotes = document.getElementById('allowMultipleVotes').checked; // เก็บค่าจากสวิตช์
+            const allowMultipleVotes = document.getElementById('allowMultipleVotes').checked;
             
             if (!topic.trim()) return showMessage("โปรดตั้งชื่อหัวข้อด้วยครับ!", "error");
             
             let choices = [];
-            inputs.forEach(input => {
-                if (input.value.trim() !== "") choices.push(input.value.trim());
-            });
+            inputs.forEach(input => { if (input.value.trim() !== "") choices.push(input.value.trim()); });
             
             if (choices.length < 2) return showMessage("กรุณากรอกข้อมูลตัวเลือกให้ครบอย่างน้อย 2 ข้อครับ!", "error");
 
@@ -162,7 +136,6 @@
             document.getElementById('saveBtn').disabled = true;
 
             try {
-                // ส่งค่า allowMultipleVotes ไปด้วย
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -170,19 +143,16 @@
                         'action': 'saveSettings',
                         'topic': topic,
                         'choices': JSON.stringify(choices),
-                        'allowMultipleVotes': allowMultipleVotes // ข้อมูลใหม่ที่จะส่งไป
+                        'allowMultipleVotes': allowMultipleVotes
                     })
                 });
 
                 const result = await response.json();
                 if (result.status === 'success') {
-                    showMessage("บันทึกการตั้งค่าเรียบร้อยแล้ว! ข้อมูลส่งเข้า Google Sheets แล้วครับ", "success");
-                } else {
-                    showMessage("เกิดข้อผิดพลาด: " + result.message, "error");
+                    showMessage("บันทึกการตั้งค่าเรียบร้อยแล้ว!", "success");
                 }
             } catch (error) {
-                showMessage("เชื่อมต่อล้มเหลว โปรดตรวจสอบการตั้งค่า Deploy ครับ", "error");
-                console.error(error);
+                showMessage("เชื่อมต่อล้มเหลว", "error");
             } finally {
                 document.getElementById('saveText').innerText = "💾 บันทึกการตั้งค่า (พร้อมเริ่มโหวต!)";
                 document.getElementById('saveSpinner').classList.add('hidden');
@@ -191,7 +161,7 @@
         }
 
         async function resetVotes() {
-            if(!confirm("แน่ใจหรือไม่ที่จะลบ 'คะแนนโหวต' ทั้งหมดทิ้ง? (หัวข้อและตัวเลือกจะยังอยู่)")) return;
+            if(!confirm("แน่ใจหรือไม่ที่จะลบ 'คะแนนโหวต' ทั้งหมดทิ้ง?")) return;
 
             document.getElementById('resetText').innerText = "กำลังล้างข้อมูล...";
             document.getElementById('resetSpinner').classList.remove('hidden');
@@ -206,7 +176,7 @@
 
                 const result = await response.json();
                 if (result.status === 'success') {
-                    showMessage("ล้างคะแนนโหวตทั้งหมดเรียบร้อยแล้ว เริ่มกิจกรรมใหม่ได้เลย!", "success");
+                    showMessage("ล้างคะแนนโหวตเรียบร้อยแล้ว!", "success");
                 }
             } catch (error) {
                 showMessage("เชื่อมต่อล้มเหลว", "error");
@@ -221,16 +191,8 @@
             const box = document.getElementById('messageBox');
             box.innerText = msg;
             box.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-            
-            if (type === 'success') {
-                box.classList.add('bg-green-100', 'text-green-800');
-            } else {
-                box.classList.add('bg-red-100', 'text-red-800');
-            }
-
-            setTimeout(() => {
-                box.classList.add('hidden');
-            }, 5000);
+            box.classList.add(type === 'success' ? 'bg-green-100' : 'bg-red-100', type === 'success' ? 'text-green-800' : 'text-red-800');
+            setTimeout(() => box.classList.add('hidden'), 5000);
         }
     </script>
 </body>
