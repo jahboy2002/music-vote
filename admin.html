@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการกระดานโหวต (Admin)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-left-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* สไตล์สำหรับ Toggle Switch (สวิตช์เปิด-ปิด) */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10B981; /* สีเขียวตอนเปิด */
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10B981; /* สีเขียวตอนเปิด */
+        }
+        .toggle-checkbox {
+            right: 0;
+            z-index: 1;
+            border-color: #E5E7EB;
+            transition: all 0.3s;
+        }
+        .toggle-label {
+            width: 3rem; /* 48px */
+            height: 1.5rem; /* 24px */
+            background-color: #D1D5DB; /* สีเทาตอนปิด */
+            border-radius: 9999px;
+            transition: all 0.3s;
+        }
+        .toggle-dot {
+            width: 1.25rem; /* 20px */
+            height: 1.25rem; /* 20px */
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 0.125rem; /* 2px */
+            left: 0.125rem; /* 2px */
+            transition: all 0.3s;
+        }
+        .toggle-checkbox:checked ~ .toggle-dot {
+            transform: translateX(100%);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="p-6">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">⚙️ ตั้งค่าระบบกระดานโหวต</h1>
+
+        <!-- ส่วนตั้งค่าหัวข้อโหวต -->
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2">1. หัวข้อการโหวต (Topic):</label>
+            <input type="text" id="topic" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="เช่น อยากให้ครูเปิดเพลงแนวไหนให้ฟังช่วงพัก?">
+        </div>
+
+        <!-- ส่วนตั้งค่าตัวเลือก -->
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2">2. ตัวเลือก (Choices):</label>
+            <div id="choicesContainer" class="space-y-3">
+                <div class="flex items-center space-x-2 choice-row">
+                    <input type="text" class="choice-input flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="ตัวเลือกที่ 1">
+                    <button onclick="removeChoice(this)" class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">ลบ</button>
+                </div>
+                <div class="flex items-center space-x-2 choice-row">
+                    <input type="text" class="choice-input flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="ตัวเลือกที่ 2">
+                    <button onclick="removeChoice(this)" class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">ลบ</button>
+                </div>
+            </div>
+            <button onclick="addChoice()" class="mt-3 w-full py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">+ เพิ่มตัวเลือก</button>
+        </div>
+
+        <!-- ส่วนตั้งค่าการโหวตซ้ำ (ใหม่) -->
+        <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
+            <div>
+                <label class="block text-gray-800 text-sm font-bold">3. กฎการโหวต:</label>
+                <p class="text-xs text-gray-500 mt-1">หากปิดสวิตช์ นักเรียน 1 เครื่อง จะโหวตได้เพียง 1 ครั้งเท่านั้น</p>
+            </div>
+            <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" name="toggle" id="allowMultipleVotes" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer opacity-0"/>
+                <label for="allowMultipleVotes" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                <div class="toggle-dot pointer-events-none"></div>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 ml-2" id="toggleStatusText">ปิด (โหวตได้ครั้งเดียว)</span>
+        </div>
+
+        <!-- ปุ่มบันทึก -->
+        <div class="flex flex-col space-y-3">
+            <button onclick="saveSettings()" id="saveBtn" class="w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition flex justify-center items-center shadow-lg shadow-green-500/30">
+                <span id="saveText">💾 บันทึกการตั้งค่า (พร้อมเริ่มโหวต!)</span>
+                <span id="saveSpinner" class="spinner hidden ml-2"></span>
+            </button>
+            
+            <button onclick="resetVotes()" id="resetBtn" class="w-full py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 transition flex justify-center items-center">
+                <span id="resetText">🗑️ ล้างคะแนนโหวตทั้งหมด (เริ่มใหม่)</span>
+                <span id="resetSpinner" class="spinner hidden ml-2"></span>
+            </button>
+        </div>
+
+        <!-- ข้อความแจ้งเตือน -->
+        <div id="messageBox" class="mt-4 p-3 rounded-lg hidden text-center font-bold"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwHfX4JhbhSNz7BFp8mjYR9hqSIUfYsk9fjcLnb0lGCAi92V5yNHbA_bCAplGla9yDULA/exec";
+
+        // อัปเดตข้อความเมื่อกดสวิตช์
+        document.getElementById('allowMultipleVotes').addEventListener('change', function() {
+            const statusText = document.getElementById('toggleStatusText');
+            if(this.checked) {
+                statusText.innerText = "เปิด (โหวตซ้ำได้เรื่อยๆ)";
+                statusText.classList.remove('text-gray-700');
+                statusText.classList.add('text-green-600');
+            } else {
+                statusText.innerText = "ปิด (โหวตได้ครั้งเดียว)";
+                statusText.classList.add('text-gray-700');
+                statusText.classList.remove('text-green-600');
+            }
+        });
+
+        function addChoice() {
+            const container = document.getElementById('choicesContainer');
+            const rowCount = container.children.length + 1;
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'flex items-center space-x-2 choice-row';
+            newRow.innerHTML = `
+                <input type="text" class="choice-input flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="ตัวเลือกที่ ${rowCount}">
+                <button onclick="removeChoice(this)" class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">ลบ</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function removeChoice(button) {
+            const container = document.getElementById('choicesContainer');
+            if (container.children.length > 2) {
+                button.parentElement.remove();
+            } else {
+                showMessage("ต้องมีอย่างน้อย 2 ตัวเลือกครับอาจารย์!", "error");
+            }
+        }
+
+        async function saveSettings() {
+            const topic = document.getElementById('topic').value;
+            const inputs = document.querySelectorAll('.choice-input');
+            const allowMultipleVotes = document.getElementById('allowMultipleVotes').checked; // เก็บค่าจากสวิตช์
+            
+            if (!topic.trim()) return showMessage("โปรดตั้งชื่อหัวข้อด้วยครับ!", "error");
+            
+            let choices = [];
+            inputs.forEach(input => {
+                if (input.value.trim() !== "") choices.push(input.value.trim());
+            });
+            
+            if (choices.length < 2) return showMessage("กรุณากรอกข้อมูลตัวเลือกให้ครบอย่างน้อย 2 ข้อครับ!", "error");
+
+            document.getElementById('saveText').innerText = "กำลังบันทึก...";
+            document.getElementById('saveSpinner').classList.remove('hidden');
+            document.getElementById('saveBtn').disabled = true;
+
+            try {
+                // ส่งค่า allowMultipleVotes ไปด้วย
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        'action': 'saveSettings',
+                        'topic': topic,
+                        'choices': JSON.stringify(choices),
+                        'allowMultipleVotes': allowMultipleVotes // ข้อมูลใหม่ที่จะส่งไป
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showMessage("บันทึกการตั้งค่าเรียบร้อยแล้ว! ข้อมูลส่งเข้า Google Sheets แล้วครับ", "success");
+                } else {
+                    showMessage("เกิดข้อผิดพลาด: " + result.message, "error");
+                }
+            } catch (error) {
+                showMessage("เชื่อมต่อล้มเหลว โปรดตรวจสอบการตั้งค่า Deploy ครับ", "error");
+                console.error(error);
+            } finally {
+                document.getElementById('saveText').innerText = "💾 บันทึกการตั้งค่า (พร้อมเริ่มโหวต!)";
+                document.getElementById('saveSpinner').classList.add('hidden');
+                document.getElementById('saveBtn').disabled = false;
+            }
+        }
+
+        async function resetVotes() {
+            if(!confirm("แน่ใจหรือไม่ที่จะลบ 'คะแนนโหวต' ทั้งหมดทิ้ง? (หัวข้อและตัวเลือกจะยังอยู่)")) return;
+
+            document.getElementById('resetText').innerText = "กำลังล้างข้อมูล...";
+            document.getElementById('resetSpinner').classList.remove('hidden');
+            document.getElementById('resetBtn').disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 'action': 'resetVotes' })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showMessage("ล้างคะแนนโหวตทั้งหมดเรียบร้อยแล้ว เริ่มกิจกรรมใหม่ได้เลย!", "success");
+                }
+            } catch (error) {
+                showMessage("เชื่อมต่อล้มเหลว", "error");
+            } finally {
+                document.getElementById('resetText').innerText = "🗑️ ล้างคะแนนโหวตทั้งหมด (เริ่มใหม่)";
+                document.getElementById('resetSpinner').classList.add('hidden');
+                document.getElementById('resetBtn').disabled = false;
+            }
+        }
+
+        function showMessage(msg, type) {
+            const box = document.getElementById('messageBox');
+            box.innerText = msg;
+            box.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            
+            if (type === 'success') {
+                box.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                box.classList.add('bg-red-100', 'text-red-800');
+            }
+
+            setTimeout(() => {
+                box.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
