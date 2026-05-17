@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* --- ตัวแปรโหมดมืด (ค่าเริ่มต้น) --- */
         body { 
             font-family: 'Sarabun', sans-serif; 
             background-color: #0f172a;
@@ -19,33 +20,50 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.5s ease, color 0.5s ease; /* ให้สลับโหมดนุ่มนวล */
         }
 
         .control-panel {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(5px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.5s ease;
         }
 
-        .btn-chart-type {
-            transition: all 0.2s;
+        /* --- กฎ CSS สำหรับโหมดสว่าง (Clean White) --- */
+        body.light-mode {
+            background-color: #ffffff;
+            background-image: none;
+            color: #1f2937; /* สีเทาเข้ม */
         }
+        body.light-mode .control-panel {
+            background: rgba(243, 244, 246, 0.9); /* สีเทาอ่อน */
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        body.light-mode #totalVotesDisplay { color: #4b5563; }
+        body.light-mode .copyright-text { color: #9ca3af; }
+        body.light-mode #updateStatus { color: #6b7280; }
+        body.light-mode .btn-chart-type { color: #4b5563; border-color: #d1d5db; }
+        body.light-mode #btn-toggle-refresh { color: #4b5563; border-color: #d1d5db; }
+        body.light-mode #btn-toggle-refresh:hover { background-color: #e5e7eb; }
+
+        /* --- เอฟเฟกต์เดิม (คงไว้ไม่เปลี่ยนแปลง) --- */
+        .btn-chart-type { transition: all 0.2s; }
         .btn-chart-type:hover, .btn-chart-type.active {
             background-color: #3b82f6;
-            color: white;
+            color: white !important; /* บังคับให้เป็นสีขาวเสมอเมื่อ Active */
             transform: scale(1.05);
+            border-color: #3b82f6 !important;
         }
 
         .refresh-spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         
-        .btn-toggle-refresh {
-            transition: all 0.3s;
-        }
+        .btn-toggle-refresh { transition: all 0.3s; }
         .btn-toggle-refresh.paused {
-            background-color: #ef4444; 
-            color: white;
-            border-color: #ef4444;
+            background-color: #ef4444 !important; 
+            color: white !important;
+            border-color: #ef4444 !important;
             animation: pulse-red 2s infinite;
         }
         @keyframes pulse-red {
@@ -53,25 +71,36 @@
             70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
+
+        /* ปุ่มสลับโหมด */
+        #themeToggleBtn {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #themeToggleBtn:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
 
+    <!-- ปุ่มสลับโหมด มืด/สว่าง มุมขวาบน (เพิ่มใหม่) -->
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-6 right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-gray-400/30 shadow-lg backdrop-blur-md text-2xl" title="สลับโหมดสว่าง/มืด">
+        ☀️
+    </button>
+
     <!-- ส่วนหัว (แสดงหัวข้อ) -->
     <div class="w-full pt-4 pb-2 px-10 text-center relative z-10 flex flex-col items-center justify-center">
-        <div class="inline-flex items-center space-x-2 bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-1 rounded-full text-sm font-bold mb-3 animate-pulse">
+        <div class="inline-flex items-center space-x-2 bg-red-500/20 text-red-500 border border-red-500/30 px-4 py-1 rounded-full text-sm font-bold mb-3 animate-pulse">
             <span class="w-2 h-2 bg-red-500 rounded-full"></span>
             <span>LIVE RESULT</span>
         </div>
         
-        <h1 id="topicDisplay" class="max-w-2xl mx-auto text-3xl font-extrabold tracking-tight leading-relaxed pb-2 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+        <h1 id="topicDisplay" class="max-w-2xl mx-auto text-3xl font-extrabold tracking-tight leading-relaxed pb-2 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
             กำลังโหลดหัวข้อ...
         </h1>
         
         <div class="flex flex-col items-center">
             <p id="totalVotesDisplay" class="text-xl text-gray-400 font-semibold italic">จำนวนผู้โหวตทั้งหมด: 0 คน</p>
-            <!-- แถบลิขสิทธิ์ที่เพิ่มใหม่: เล็ก บาง เรียบหรู -->
-            <p class="mt-1 text-[10px] text-white/20 tracking-[0.2em] uppercase font-bold">
+            <!-- แถบลิขสิทธิ์ -->
+            <p class="copyright-text mt-1 text-[10px] text-white/20 tracking-[0.2em] uppercase font-bold transition-colors">
                 © 2026 Matiphat Cherdsuk | THANYARAT SCHOOL
             </p>
         </div>
@@ -99,7 +128,7 @@
         <div class="flex items-center space-x-4">
             <span id="updateStatus" class="text-sm text-gray-400">อัปเดตล่าสุด: เมื่อสักครู่</span>
             
-            <button onclick="toggleAutoRefresh()" id="btn-toggle-refresh" class="btn-toggle-refresh px-4 py-2 bg-transparent border border-gray-500 hover:bg-gray-800 text-gray-300 rounded-lg font-semibold text-sm flex items-center transition">
+            <button onclick="toggleAutoRefresh()" id="btn-toggle-refresh" class="btn-toggle-refresh px-4 py-2 bg-transparent border border-gray-500 hover:bg-gray-800 text-gray-300 rounded-lg font-semibold text-sm flex items-center">
                 <span id="toggleIcon" class="mr-2">⏸️</span> <span id="toggleText">หยุดอัปเดตชั่วคราว</span>
             </button>
 
@@ -116,6 +145,7 @@
         let currentChartType = 'bar';
         let autoRefreshInterval = null; 
         let isPaused = false; 
+        let isLightMode = false; // สถานะโหมดปัจจุบัน
 
         const chartColors = [
             'rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)', 
@@ -126,6 +156,31 @@
             'rgb(59, 130, 246)', 'rgb(236, 72, 153)', 'rgb(16, 185, 129)', 
             'rgb(245, 158, 11)', 'rgb(139, 92, 246)', 'rgb(239, 68, 68)'
         ];
+
+        // --- ระบบสลับโหมดมืด/สว่าง ---
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggleBtn');
+            
+            isLightMode = !isLightMode;
+            
+            if (isLightMode) {
+                body.classList.add('light-mode');
+                btn.innerText = '🌙'; // เปลี่ยนไอคอน
+                // แจ้ง Chart.js ให้เปลี่ยนสีตัวอักษรเป็นสีเข้ม
+                Chart.defaults.color = '#374151'; 
+            } else {
+                body.classList.remove('light-mode');
+                btn.innerText = '☀️'; // เปลี่ยนไอคอน
+                // แจ้ง Chart.js ให้เปลี่ยนสีตัวอักษรเป็นสีสว่าง
+                Chart.defaults.color = '#cbd5e1'; 
+            }
+
+            // สั่งให้กราฟวาดตัวเองใหม่ตามสีตัวอักษรที่เปลี่ยนไป
+            if (chartInstance) {
+                chartInstance.update();
+            }
+        }
 
         async function fetchResults() {
             try {
@@ -159,7 +214,8 @@
                 chartInstance.destroy();
             }
 
-            Chart.defaults.color = '#cbd5e1'; 
+            // ตั้งค่าพื้นฐาน Chart.js ตามโหมด
+            Chart.defaults.color = isLightMode ? '#374151' : '#cbd5e1'; 
             Chart.defaults.font.family = "'Sarabun', sans-serif";
             Chart.defaults.font.size = 16;
 
@@ -185,8 +241,15 @@
                         tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { size: 18 }, bodyFont: { size: 16, weight: 'bold' }, padding: 15 }
                     },
                     scales: currentChartType === 'bar' ? {
-                        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 16 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                        x: { ticks: { font: { size: 18, weight: 'bold' } }, grid: { display: false } }
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { precision: 0, font: { size: 16 } }, 
+                            grid: { color: isLightMode ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' } 
+                        },
+                        x: { 
+                            ticks: { font: { size: 18, weight: 'bold' } }, 
+                            grid: { display: false } 
+                        }
                     } : {}
                 }
             });
